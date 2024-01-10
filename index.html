@@ -56,18 +56,21 @@
   <style>
     label{margin-top:5px;}
     input{font-size:18px;padding:5px;}
-    body{padding:15px;background:#eee;font-size:18px;display:flex;flex-direction:column;gap:5px;}
+    body{padding:15px;background:#eee;font-size:18px;display:flex;flex-direction:column;gap:15px;}
     pre{letter-spacing:5px;border:1px solid grey;padding:5px;margin:0;background:#FFF;min-height:100px;}
+    hr{background:#ddd;height:1px;width:100%;}
   </style>
   
   <h1>Simple Password Backup</h1>
   <p>Split your password into multiple, partially redacted, reconstructable backups.</p>
+  <p>Why? Because it's simple. You can physically divide your password amongst trusted contacts without a single point of risk. You can choose your level of redundancy. It's simple to reconstruct. And it's probably better than whatever your current master password/private key backup strategy is...</p>
+  <p>Is this secure? It should be... There are no libraries, no dependencies, no connections. The code is a single, readable, 77 lines, html file. For the security conscious, this page can be saved and run in an incognito browser, from your local disk, on an air-gapped (offline) laptop.</p>
+  <hr>
   <label>1. How many password backups?</label><input id="a" onkeyup="x()" autocomplete="off" placeholder="users" value="5" />
   <label>2. How many backups are needed to reconstruct the password?</label><input id="b" onkeyup="x()" autocomplete="off" placeholder="numparts" value="3" />
   <label>3. What is the Password?</label><input id="c" onkeyup="x()" autocomplete="off" placeholder="pwd" value="abcdefghijklm" />
   <label>Passwords Output</label><pre id="d"></pre>
-  <p>NOTE: Is your password guessable? Consider changing it!</p>
+  <p>NOTE: Is your redacted password guessable? Consider changing it!</p>
 
 </body>
 </html>
-
