@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="description" content="Simple Password Backup">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Simple Password Backup</title>
+</head>
+<body>
+  <script>
+    console.clear()
+    /** Redacts text. */
+    function splice(str, index, count) {
+      // if negative, start at end
+      let add = ''.padStart(count, '█')
+      const indexBefore = index
+      const addBefore = add
+      if (index < 0) {
+        add = add.substring(-index)
+        index = 0;
+      }
+      count = add.length
+      return str.slice(0, index) + (add || "") + str.slice(index + count);
+    }
+    
+    function x() {
+      try {
+        const [a,b,c,d] = 'abcd'.split('').map(id => document.getElementById(id))
+        const users = parseInt(a.value)
+        const requiredUsers = parseInt(b.value)
+        const redundantUsers = users - requiredUsers
+        const pwd = c.value
+        if (pwd.length < users) throw new Error('Password must be longer than backups.')
+        const minUsers = Math.ceil(users / (redundantUsers + 1))
+        let str = ''
+        str += `Reconstruct using any ${requiredUsers} backups\n(OR ${minUsers} specific backups)\n`
+//        str += `\n     ${new Array(pwd.length).fill(1).map((a,b) => (b + 1) % 10).join('')}`
+        
+        const gaplen = requiredUsers - 1 // how long the black gap is
+        const separatorlen = redundantUsers + 1 // dist between gaps (how many are required to piece it back together)
+        for (let i = 0; i < users; i++) {
+          let tmp = pwd
+          /* Method 1 */
+          let x = i - gaplen
+          while (x < pwd.length) {
+            tmp = splice(tmp, x, gaplen)
+            x += gaplen + separatorlen
+          }
+          str += `\n#${(i+1+'').padEnd(2, ' ')}: ${tmp.substring(0, pwd.length)}`
+        }
+        d.innerHTML = str + '\n\n'
+      } catch (err) {
+        console.log(`Error: ${err.message}`)
+        d.innerHTML = `Error: ${err.message}`
+      }
+    }
+    setTimeout(x, 100)
+  </script>
+  
+  <style>
+    label{margin-top:5px;}
+    input{font-size:18px;padding:5px;}
+    body{padding:15px;background:#eee;font-size:18px;display:flex;flex-direction:column;gap:5px;}
+    pre{letter-spacing:5px;border:1px solid grey;padding:5px;margin:0;background:#FFF;min-height:100px;}
+  </style>
+  
+  <h1>Simple Password Backup</h1>
+  <label>1. How many password backups?</label><input id="a" onkeyup="x()" autocomplete="off" placeholder="users" value="5" />
+  <label>2. How many backups are needed to reconstruct the password?</label><input id="b" onkeyup="x()" autocomplete="off" placeholder="numparts" value="3" />
+  <label>3. What is the Password?</label><input id="c" onkeyup="x()" autocomplete="off" placeholder="pwd" value="abcdefghijklm" />
+  <label>Passwords Output</label><pre id="d" />
+</body>
+</html>
+
