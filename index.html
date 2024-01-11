@@ -8,8 +8,9 @@
 </head>
 <body>
   <script>
-    /** Redacts text. */
-    function splice(str, index, count) {
+    /** Redacts text - allows negative and wrapping. */
+    function splice(str, index, count, wrap = false) {
+      const strlen = str.length
       let add = ''.padStart(count, '█')
       const indexBefore = index
       const addBefore = add
@@ -18,7 +19,17 @@
         index = 0;
       }
       count = add.length
-      return str.slice(0, index) + (add || "") + str.slice(index + count);
+      str = str.slice(0, index) + (add || "") + str.slice(index + count);
+      if (wrap && str.length > strlen) {
+        return splice(str.substring(0, strlen), 0, str.length - strlen)
+      }
+      return str
+    }
+
+    let useMethod = 1
+    function toggleMethods() {
+      useMethod = useMethod === 1 ? 2 : 1
+      x()
     }
     
     function x() {
@@ -34,15 +45,37 @@
         str += `Reconstruct using any ${requiredUsers} backups\n(OR ${minUsers} specific backups)\n`
         
         const gaplen = requiredUsers - 1 // how long the black gap is
-        const separatorlen = redundantUsers + 1 // dist between gaps (how many are required to piece it back together)
-        for (let i = 0; i < users; i++) {
-          let tmp = pwd
-          let x = i - gaplen
-          while (x < pwd.length) {
-            tmp = splice(tmp, x, gaplen)
-            x += gaplen + separatorlen
-          }
-          str += `\n#${(i+1+'').padEnd(2, ' ')}: ${tmp.substring(0, pwd.length)}`
+        const pwdmodlen = pwd.length - (pwd.length % users)
+        const redactlen = pwdmodlen / users
+
+        switch (useMethod) {
+          case 1:
+            // method 1: redact every x-th char
+            const separatorlen = redundantUsers + 1 // dist between gaps (how many are required to piece it back together)
+            for (let i = 0; i < users; i++) {
+              let tmp = pwd
+              let x = i - gaplen
+              while (x < pwd.length) {
+                tmp = splice(tmp, x, gaplen, false)
+                x += gaplen + separatorlen
+              }
+              str += `\n#${(i+1+'').padEnd(2, ' ')}: ${tmp.substring(0, pwd.length)}`
+            }
+            break
+          case 2:
+            // method 2: split the password into chunks, then redact the chunks
+            for (let i = 0; i < users; i++) {
+              let x = i
+              let tmp = pwd.substring(0, pwdmodlen)
+              let remainder = pwd.substring(pwdmodlen)
+              while (x < tmp.length) {
+              tmp = splice(tmp, x * redactlen, redactlen * gaplen, true)
+                x += pwdmodlen
+              }
+              if (i < remainder.length) remainder = splice(remainder, i, 1, false)
+              str += `\n#${(i+1+'').padEnd(2, ' ')}: ${tmp + remainder}`
+            }
+            break
         }
         d.innerHTML = str + '\n\n'
       } catch (err) {
@@ -54,9 +87,13 @@
   </script>
   
   <style>
+    label,input,button,body{font-size:18px;font-family:'Times New Roman', Times, serif;}
+    input,button{height:35px;box-sizing: border-box;}
+    button{background:#ddd;border:1px solid #bbb;padding:0 15px;cursor:pointer;}
+    h1,p{margin-top:0;}
     label{margin-top:5px;}
-    input{font-size:18px;padding:5px;}
-    body{padding:15px;background:#eee;font-size:18px;display:flex;flex-direction:column;gap:15px;}
+    input{padding:5px;}
+    body{padding:15px;background:#eee;display:flex;flex-direction:column;gap:15px;}
     pre{letter-spacing:5px;border:1px solid grey;padding:5px;margin:0;background:#FFF;min-height:100px;}
     hr{background:#ddd;height:1px;width:100%;}
   </style>
@@ -64,13 +101,15 @@
   <h1>Simple Password Backup</h1>
   <p>Split your password into multiple, partially redacted, reconstructable backups.</p>
   <p>Why? Because it's simple. You can physically divide your password amongst trusted contacts without a single point of risk. You can choose your level of redundancy. It's simple to reconstruct. And it's probably better than whatever your current master password/private key backup strategy is...</p>
-  <p>Is this secure? It should be... There are no libraries, no dependencies, no connections. The code is a single, readable, 77 lines, html file. For the security conscious, this page can be saved and run in an incognito browser, from your local disk, on an air-gapped (offline) laptop.</p>
+  <p>Is this secure? It should be... There are no libraries, no dependencies, no connections. The code is a single, readable, 116 lines, html file. For the security conscious, this page can be saved and run in an incognito browser, from your local disk, on an air-gapped (offline) laptop.</p>
   <hr>
   <label>1. How many password backups?</label><input id="a" onkeyup="x()" autocomplete="off" placeholder="users" value="5" />
   <label>2. How many backups are needed to reconstruct the password?</label><input id="b" onkeyup="x()" autocomplete="off" placeholder="numparts" value="3" />
   <label>3. What is the Password?</label><input id="c" onkeyup="x()" autocomplete="off" placeholder="pwd" value="abcdefghijklm" />
-  <label>Redacted Passwords Output (store these separately!)</label><pre id="d"></pre>
-  <p>NOTE: Is your redacted password guessable? Consider changing it!</p>
+  <label>Redacted Passwords Output (store these separately!)</label>
+  <pre id="d"></pre>
+  <div><button onclick="toggleMethods()">Toggle redaction method</button></div>
+  <p>NOTE: Is your redacted password guessable, or a common phrase? Consider changing it!</p>
 
 </body>
 </html>
